@@ -57,8 +57,23 @@ return pool
  * @param {string} id The id of the user.
  * @return {Promise<{}>} A promise to the user.
  */
+
 const getUserWithId = function(id) {
-  return Promise.resolve(users[id]);
+//   return Promise.resolve(users[id]);
+return pool
+.query(
+  `
+        SELECT *
+        FROM users
+        WHERE id = $1`,
+  [id]
+)
+.then((result) => {
+  return result.rows[0];
+})
+.catch((err) => {
+  console.log(err.message);
+});
 };
 
 /**
@@ -66,11 +81,12 @@ const getUserWithId = function(id) {
  * @param {{name: string, password: string, email: string}} user
  * @return {Promise<{}>} A promise to the user.
  */
+
 const addUser = function(user) {
-  const userId = Object.keys(users).length + 1;
-  user.id = userId;
-  users[userId] = user;
-  return Promise.resolve(user);
+//   const userId = Object.keys(users).length + 1;
+//   user.id = userId;
+//   users[userId] = user;
+//   return Promise.resolve(user);
 };
 
 /// Reservations
