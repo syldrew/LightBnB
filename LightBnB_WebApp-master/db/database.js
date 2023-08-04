@@ -2,6 +2,7 @@ const properties = require("./json/properties.json");
 const users = require("./json/users.json");
 
 const pg = require("pg");
+const { query } = require("express");
 const Pool = pg.Pool;
 const config = {
   user: "labber",
@@ -140,17 +141,68 @@ const getAllReservations = function (guest_id, limit = 10) {
  * @param {*} limit The number of results to return.
  * @return {Promise<[{}]>}  A promise to the properties.
  */
-const getAllProperties = (options, limit = 10) => {
-    return pool
-      .query(`SELECT * FROM properties LIMIT $1`, [limit])
-      .then((result) => {
-        console.log(result.rows);
-        return result.rows;
-      })
-      .catch((err) => {
-        console.log(err.message);
-      });
-};
+// const getAllProperties = (options, limit = 10) => {
+//     return pool
+//       .query(`SELECT * FROM properties LIMIT $1`, [limit])
+//       .then((result) => {
+//         console.log(result.rows);
+//         return result.rows;
+//       })
+//       .catch((err) => {
+//         console.log(err.message);
+//       });
+// };
+
+const getAllProperties = function(options, limit = 10) {
+    const queryParams = [];
+    let queryString = `
+          SELECT properties.*, avg(property_reviews.rating) AS average_rating
+          FROM properties
+          JOIN property_reviews ON properties.id = property_id
+      `;
+  
+    if (options.city) {
+      queryParams.push(`%${options.city}%`);
+      queryString += `WHERE city LIKE $${queryParams.length} `;
+    }
+  
+    if (options.owner_id) {
+      queryParams.push(options.owner_id);
+      queryString += `WHERE owner_id = $${queryParams.length} `;
+    }
+  
+    if (options.minimum_price_per_night && options.maximum_price_per_night) {
+      queryParams.push(options.minimum_price_per_night * 100); // Convert to cents
+      queryParams.push(options.maximum_price_per_night * 100); // Convert to cents
+      if (queryParams.length === 2) {
+        queryString += `WHERE cost_per_night >= $${queryParams.length - 1
+          } AND cost_per_night <= $${queryParams.length} `;
+      } else {
+        queryString += `AND cost_per_night >= $${queryParams.length - 1
+          } AND cost_per_night <= $${queryParams.length} `;
+      }
+    }
+  
+    if (options.minimum_rating) {
+      queryParams.push(options.minimum_rating);
+      if (queryParams.length === 1) {
+        queryString += `WHERE avg(property_reviews.rating) >= $${queryParams.length} `;
+      } else {
+        queryString += `AND avg(property_reviews.rating) >= $${queryParams.length} `;
+      }
+    }
+  
+    queryParams.push(limit);
+    queryString += `
+          GROUP BY properties.id
+          ORDER BY cost_per_night
+          LIMIT $${queryParams.length};
+      `;
+  
+    console.log("queryString:", queryString, "queryParams:", queryParams);
+  
+    return pool.query(queryString, queryParams).then((res) => res.rows);
+  };
 
 /**
  * Add a property to the database
@@ -158,11 +210,38 @@ const getAllProperties = (options, limit = 10) => {
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function(property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+//   const propertyId = Object.keys(properties).length + 1;
+//   property.id = propertyId;
+//   properties[propertyId] = property;
+//   return Promise.resolve(property);
+const values = [
+    property.title,
+    property.description,
+    property.owner_id,
+    property.cover_photo_url,
+    property.thumbnail_photo_url,
+    property.cost_per_night,
+    property.parking_spaces,
+    property.number_of_bathrooms,
+    property.number_of_bedrooms,
+    property.province,
+    property.city,
+    property.country,
+    property.street,
+    property.post_code,
+  ];
+  const queryString = `INSERT INTO properties (
+    title, description, owner_id, cover_photo_url, thumbnail_photo_url, cost_per_night, parking_spaces, number_of_bathrooms, number_of_bedrooms, province, city, country, street, post_code)
+	 VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+	 RETURNING *;
+		`;
+
+  console.log("queryString:", queryString, "values:", values);
+  return pool.query(queryString, values).then((result) => {
+    return result.rows[0];
+  });
 };
+
 
 module.exports = {
   getUserWithEmail,
