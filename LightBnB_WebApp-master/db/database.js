@@ -13,12 +13,15 @@ const config = {
 
 const pool = new Pool(config);
 
-pool.query(`SELECT title FROM properties LIMIT 10;`).then((response) => {
-    console.log(response);
+// pool.query(`SELECT title FROM properties LIMIT 10;`).then((response) => {
+//     console.log(response);
 
-});
+// });
+
+
 
 /// Users
+
 
 /**
  * Get a single user from the database given their email.
@@ -26,16 +29,6 @@ pool.query(`SELECT title FROM properties LIMIT 10;`).then((response) => {
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithEmail = function(email) {
-//   let resolvedUser = null;
-//   for (const userId in users) {
-//     const user = users[userId];
-//     if (user && email) {
-//         if (user.email.toLowerCase() === email.toLowerCase()) {
-//           resolvedUser = user;
-//         }
-//     }
-//   }
-//   return Promise.resolve(resolvedUser);
 return pool
 .query(
   `
@@ -53,6 +46,7 @@ return pool
 });
 };
 
+
 /**
  * Get a single user from the database given their id.
  * @param {string} id The id of the user.
@@ -60,7 +54,6 @@ return pool
  */
 
 const getUserWithId = function(id) {
-//   return Promise.resolve(users[id]);
 return pool
 .query(
   `
@@ -77,6 +70,7 @@ return pool
 });
 };
 
+
 /**
  * Add a new user to the database.
  * @param {{name: string, password: string, email: string}} user
@@ -84,10 +78,6 @@ return pool
  */
 
 const addUser = function(user) {
-//   const userId = Object.keys(users).length + 1;
-//   user.id = userId;
-//   users[userId] = user;
-//   return Promise.resolve(user);
 const values = [user.name, user.email, user.password];
 const queryString = `
   INSERT INTO users(name, email, password)
@@ -99,6 +89,8 @@ return pool.query(queryString, values).then((result) => {
 });
 };
 
+
+
 /// Reservations
 
 /**
@@ -107,10 +99,7 @@ return pool.query(queryString, values).then((result) => {
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 
-
 const getAllReservations = function (guest_id, limit = 10) {
-//   return getAllProperties(null, 2);
-    //  return getAllProperties(null);
     return pool
     .query(
       `
@@ -141,17 +130,6 @@ const getAllReservations = function (guest_id, limit = 10) {
  * @param {*} limit The number of results to return.
  * @return {Promise<[{}]>}  A promise to the properties.
  */
-// const getAllProperties = (options, limit = 10) => {
-//     return pool
-//       .query(`SELECT * FROM properties LIMIT $1`, [limit])
-//       .then((result) => {
-//         console.log(result.rows);
-//         return result.rows;
-//       })
-//       .catch((err) => {
-//         console.log(err.message);
-//       });
-// };
 
 const getAllProperties = function(options, limit = 10) {
     const queryParams = [];
@@ -160,17 +138,14 @@ const getAllProperties = function(options, limit = 10) {
           FROM properties
           JOIN property_reviews ON properties.id = property_id
       `;
-  
     if (options.city) {
       queryParams.push(`%${options.city}%`);
       queryString += `WHERE city LIKE $${queryParams.length} `;
     }
-  
     if (options.owner_id) {
       queryParams.push(options.owner_id);
       queryString += `WHERE owner_id = $${queryParams.length} `;
     }
-  
     if (options.minimum_price_per_night && options.maximum_price_per_night) {
       queryParams.push(options.minimum_price_per_night * 100); // Convert to cents
       queryParams.push(options.maximum_price_per_night * 100); // Convert to cents
@@ -182,7 +157,6 @@ const getAllProperties = function(options, limit = 10) {
           } AND cost_per_night <= $${queryParams.length} `;
       }
     }
-  
     if (options.minimum_rating) {
       queryParams.push(options.minimum_rating);
       if (queryParams.length === 1) {
@@ -191,29 +165,25 @@ const getAllProperties = function(options, limit = 10) {
         queryString += `AND avg(property_reviews.rating) >= $${queryParams.length} `;
       }
     }
-  
     queryParams.push(limit);
     queryString += `
           GROUP BY properties.id
           ORDER BY cost_per_night
           LIMIT $${queryParams.length};
       `;
-  
     console.log("queryString:", queryString, "queryParams:", queryParams);
-  
     return pool.query(queryString, queryParams).then((res) => res.rows);
   };
+
+
 
 /**
  * Add a property to the database
  * @param {{}} property An object containing all of the property details.
  * @return {Promise<{}>} A promise to the property.
  */
+
 const addProperty = function(property) {
-//   const propertyId = Object.keys(properties).length + 1;
-//   property.id = propertyId;
-//   properties[propertyId] = property;
-//   return Promise.resolve(property);
 const values = [
     property.title,
     property.description,
@@ -235,13 +205,11 @@ const values = [
 	 VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	 RETURNING *;
 		`;
-
   console.log("queryString:", queryString, "values:", values);
   return pool.query(queryString, values).then((result) => {
     return result.rows[0];
   });
 };
-
 
 module.exports = {
   getUserWithEmail,
