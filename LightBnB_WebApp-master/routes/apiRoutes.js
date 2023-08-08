@@ -18,7 +18,6 @@ router.get("/reservations", (req, res) => {
   if (!userId) {
     return res.send({ error: "error" });
   }
-
   database
     .getAllReservations(userId)
     .then((reservations) => res.send({ reservations }))
@@ -28,23 +27,16 @@ router.get("/reservations", (req, res) => {
     });
 });
 
-router.post("/properties", (req, res) => {
-  const userId = req.session.userId;
-  if (!userId) {
-    return res.send({ error: "error" });
-  }
-
-  const newProperty = req.body;
-  newProperty.owner_id = userId;
-  database
-    .addProperty(newProperty)
-    .then((property) => {
-      res.send(property);
-    })
-    .catch((e) => {
-      console.error(e);
-      res.send(e);
-    });
-});
+router.post('/properties', (req, res) => {
+    const userId = req.session.userId;
+    database.addProperty({...req.body, owner_id: userId})
+      .then(property => {
+        res.send(property);
+      })
+      .catch(e => {
+        console.error(e);
+        res.send(e)
+      });
+  });
 
 module.exports = router;
