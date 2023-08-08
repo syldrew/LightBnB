@@ -43,8 +43,10 @@ router.post("/login", (req, res) => {
         id: user.id,
       },
     });
+})
+.catch((e) => res.send(e));
   });
-});
+
 
 // Log a user out
 router.post("/logout", (req, res) => {
