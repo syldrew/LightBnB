@@ -17,10 +17,10 @@ A simple multi-page Airbnb clone that uses a server-side Javascript to display t
 
 ### For Database
 
-1. go look into .env.example file
-2. create your own .env and fill out the database credentials to connet to a database
-3. run command `\i seeds/seeds/02_seeds.sql`
-4. run command `\i migrations/01_schema.sql`
+
+1. Fill out the database credentials to connet to a database in database.js
+2. run command `\i seeds/seeds/02_seeds.sql`
+3. run command `\i migrations/01_schema.sql`
 
 ## Project Structure
 
